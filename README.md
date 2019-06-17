@@ -6,10 +6,10 @@
 ## to run on local file system
 
 ### install python 3.7 virtual env
-`virtualenv -p python3.7 dockflaskvenv`
-`source dockflaskvenv/bin/activate`
-`cd backend`
-`FLASK_APP=calcservice.py python -m flask run`
+`virtualenv -p python3.7 dockflaskvenv`  
+`source dockflaskvenv/bin/activate`  
+`cd backend`  
+`FLASK_APP=calcservice.py python -m flask run`  
 
 ## View
 
