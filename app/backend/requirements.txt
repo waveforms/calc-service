@@ -1,0 +1,11 @@
+Flask
+mysql-connector
+flask-sqlalchemy
+flask_wtf
+flask-migrate
+flask-login
+Flask-API
+Flask-Bootstrap
+Flask-RESTful
+Werkzeug
+flask_cors
