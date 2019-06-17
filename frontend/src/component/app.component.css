@@ -1,0 +1,27 @@
+
+.App {
+    text-align: start;
+}
+
+form {
+    margin: 20px auto;
+    display:block;
+  }
+
+
+form input {
+    display: block;
+    width: 100%;
+  }
+ 
+  
+  .output {
+    background-color: grey;
+    color: white;
+    display: block;
+    margin: 20px 250px;
+    white-space: pre;
+    padding: 20px;
+  }
+  
+ 
