@@ -18,4 +18,7 @@ ENV foo=/bar
 ENV FLASK_APP=calcservice.py
 ENV FLASK_ENV=development
 
-CMD cd backend &&  python -m flask run --host 0.0.0.0
+
+CMD cd backend && python -m flask run --host 0.0.0.0
+
+

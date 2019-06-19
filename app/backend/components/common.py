@@ -12,26 +12,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 import flask_login
 from flask_login import login_user, logout_user, current_user
-from flask_api import FlaskAPI, status, exceptions
+#from flask_api import FlaskAPI, status, exceptions
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 import os
 from flask_restful import Resource, Api
 from . import maxsum
+from sqlalchemy import desc
 
 
-#e = create_engine('sqlite:///test.db')
 
-#app = Flask(__name__)
-app = FlaskAPI(__name__)
-CORS(app)
+app = Flask(__name__)
+CORS(app, supports_credentials=True)
 Bootstrap(app)
 app.config.from_object(Config)
 api = Api(app)
 # app.config['STATIC_FOLDER'] = 'static'
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
-
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 @login_manager.user_loader
 def load_user(id):
@@ -41,62 +41,8 @@ def load_user(id):
         return redirect(url_for('login'))
     return User.query.get(int(value))
 
-# Our mock database.
-#users = {'foo@bar.tld': {'password': 'secret'}}
 
-
-# @login_manager.user_loader
-# def user_loader(email):
-#     if email not in users:
-#         return
-
-#     user = User()
-#     user.id = email
     return user
-
-# @login_manager.request_loader
-# def request_loader(request):
-#     # email = request.form.get('email')
-#     # if email not in users:
-#     #     return
-
-#     user = User()
-#     user.id = email
-
-#     # DO NOT ever store passwords in plaintext and always compare password
-#     # hashes using constant-time comparison!
-#     user.is_authenticated = request.form['password'] == users[email]['password']
-
-#     return user
-
-
-# login = LoginManager(app)
-# login.login_view = 'login'
-
-# login_manager.init_app(app)
-
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if request.method == 'GET':
-#         return '''
-#                <form action='login' method='POST'>
-#                 <input type='text' name='email' id='email' placeholder='email'/>
-#                 <input type='password' name='password' id='password' placeholder='password'/>
-#                 <input type='submit' name='submit'/>
-#                </form>
-#                '''
-
-#     email = request.form['email']
-#     if request.form['password'] == users[email]['password']:
-#         user = User()
-#         user.id = email
-#         flask_login.login_user(user)
-#         return redirect(url_for('protected'))
-
-#     return 'Bad login'
 
 
 @app.route('/logout')
@@ -129,10 +75,10 @@ def login():
     return render_template('login.html', title='Sign In', form=form)
 
 
-@app.route('/protected')
-@flask_login.login_required
-def protected():
-    return 'Logged in as: ' + flask_login.current_user.id
+# @app.route('/protected')
+# @flask_login.login_required
+# def protected():
+#     return 'Logged in as: ' + flask_login.current_user.id
 
 
 @app.route('/')
@@ -151,18 +97,6 @@ def index():
     return render_template('index.html', title='Home', form=form,
                            posts=posts)
     
-    # user = {'username': 'Miguel'}
-    # posts = [
-    #     {
-    #         'author': {'username': 'John'},
-    #         'body': 'Beautiful day in Portland!'
-    #     },
-    #     {
-    #         'author': {'username': 'Susan'},
-    #         'body': 'The Avengers movie was so cool!'
-    #     }
-    # ]
-    # return render_template('index.html', title='Home', posts=posts)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -210,9 +144,23 @@ class Post(db.Model):
 
 
 class Calculation_Assets(Resource):
-    def post(self):
+    def get(self, id):
+        post = Post.query.filter_by(user_id=id).order_by(desc('timestamp')).first()
+        if (post):
+            print(post.body)
+            return {'data': json.loads(post.body)}
+        else:
+            return {'data': None }
+         
+    def post(self, id):
         json_data = request.get_json(force=True)
+        #Post(body=form.post.data, author=current_user)
+        post = Post(user_id=id, body=json.dumps(json_data))
+        db.session.add(post)
+        db.session.commit()
+        flash('Your json tree was saved.')
         print(json.dumps(json_data))
+        #+ flask_login.current_user.id
         sum_lp = maxsum.convert_json(json_data)
         print(sum_lp)
         e = db.get_engine()
@@ -221,55 +169,9 @@ class Calculation_Assets(Resource):
         # query = conn.execute("select * from annotation where frame_id=?",(frame_id))
         # result = {'data': [dict(zip(tuple (query.keys()) ,i)) for i in query.cursor]}
         # return result
+    
+api.add_resource(Calculation_Assets, '/API/v1/calc_assets/<int:id>')  # bind url identifier to class; also make it querable
 
-api.add_resource(Calculation_Assets, '/API/v1/calc_assets')  # bind url identifier to class; also make it querable
-
-# notes = {
-#     0: 'do the shopping',
-#     1: 'build the codez',
-#     2: 'paint the door',
-# }
-
-# def note_repr(key):
-#     return {
-#         'url': request.host_url.rstrip('/') + url_for('notes_detail', key=key),
-#         'text': notes[key]
-#     }
-
-
-# @app.route("/notes_list", methods=['GET', 'POST'])
-# def notes_list():
-#     """
-#     List or create notes.
-#     """
-#     if request.method == 'POST':
-#         note = str(request.data.get('text', ''))
-#         idx = max(notes.keys()) + 1
-#         notes[idx] = note
-#         return note_repr(idx), status.HTTP_201_CREATED
-
-#     # request.method == 'GET'
-#     return [note_repr(idx) for idx in sorted(notes.keys())]
-
-
-# @app.route("/API/v1/<int:key>/", methods=['GET', 'PUT', 'POST', 'DELETE'])
-# def notes_detail(key):
-#     """
-#     Retrieve, update or delete note instances.
-#     """
-#     if request.method == 'POST':
-#         note = str(request.data.get('json_text', ''))
-#         notes[key] = note
-#         return note_repr(key)
-
-#     elif request.method == 'DELETE':
-#         notes.pop(key, None)
-#         return '', status.HTTP_204_NO_CONTENT
-
-#     # request.method == 'GET'
-#     if key not in notes:
-#         raise exceptions.NotFound()
-#     return note_repr(key)
 
 
 @app.shell_context_processor
