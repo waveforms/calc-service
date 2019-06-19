@@ -15,8 +15,8 @@ URI = f'mysql+mysqlconnector://{USER}:{PASS}@{HOST}:{PORT}/{DB}'
 class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = "\2\1thisismyscretkey\1\2\e\y\y\h"
-
-
+    TEST_USERNAME = 'tom'
+    TEST_PASSWORD = 'cat'
     SQLALCHEMY_DATABASE_URI = URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    #SQLALCHEMY_DATABASE_URI = "sqlite:///" + os.path.join(basedir, "app.db")
+    SQLALCHEMY_DATABASE_URI_TEST = "sqlite:///" + os.path.join(basedir, "app.db")

@@ -9,3 +9,4 @@ Flask-Bootstrap
 Flask-RESTful
 Werkzeug
 flask_cors
+pytest
