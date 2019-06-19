@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect,  Fragment } from 'react';
 //import logo from './logo.svg';
 import './App.css';
 
-//import {TreeExample}from './TreeExample';
 import {JsonTreeView}from './JsonTreeView';
 import { Map } from 'immutable'
 import AddUserTreeForm from './addUserTree';
@@ -13,19 +12,19 @@ var idCounter = 5;
 var parentMap = {1:0, 2:1,3:2,4:1};
 
 /* this is demo data used to show the data structure */
-const data = {
+const demo_data = {
   node_value_display: '1',
   id: 1,
-  member_details: Map({ node_value: '1', left_or_right:'root', number_children: '2', }),
+  member_details: Map({  left_or_right:'root', number_children: '2', }),
   children: [
       {
           node_value_display: '2',
           id: 2,
-          member_details: Map({ node_value: '2', left_or_right:'left', number_children: '1', }),
+          member_details: Map({  left_or_right:'left', number_children: '1', }),
           children: [
               { node_value_display: '5',
               id: 3,
-              member_details: Map({ node_value: '2', left_or_right:'right', number_children: '0', },),
+              member_details: Map({  left_or_right:'right', number_children: '0', },),
               children: []
              }
           ]
@@ -33,7 +32,7 @@ const data = {
       {
           node_value_display: '3',
           id: 4,
-          member_details: Map({ node_value: '3', left_or_right:'right', number_children: '0', },),
+          member_details: Map({ left_or_right:'right', number_children: '0', },),
           children: []
       }
     ]}
@@ -53,14 +52,15 @@ function searchTreeById(element, matchingId){
   return null;
 }
 
-function addChildToId(element, matchingId, node_value_display = '0', node_value = '0', left_or_right = 'left', number_children = '0'){
+function addChildToId(element, matchingId, node_value_display = '0',  left_or_right = 'left', number_children = '0'){
   idCounter++;
   var parent =  searchTreeById(element, parseInt(matchingId))
  
   var newChild = {
     node_value_display: node_value_display,
     id: idCounter,
-    member_details: Map({ node_value: node_value, left_or_right: left_or_right, number_children: number_children, })
+    children: [],
+    member_details: Map({  left_or_right: left_or_right, number_children: number_children, })
   }
   
   if(parent.children == null){
@@ -102,54 +102,85 @@ function removeNodeById(element, matchingId){
 
 }
 
-const handleValues = (values) => {
-  addChildToId(data, values.parent_node_id, values.node_value_display, values.node_value, values.left_or_right, values.number_children);
-};
-
-const onClickDN = () => {
-  removeNodeById(data, idCounter)
-}
-
-const onClickSJ = () => {
-  console.log("sending data")
-  fetch(window.calc_assets_url, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    }).then(response => response.json())
-      .then(data => {
-        console.log(data.data.sum_lp);
-        alert(data.data.sum_lp)
-      })
-      .catch(function(err) {
-      // Called if the server returns any errors
-        console.log("Error:"+err);
-      });
-}
-
-
-
-
-var data_subsection = searchTreeById(data, 1);
-
-
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-      <JsonTreeView data={data_subsection} shouldExpandNode={raw => true} />
-      <p>Calc Sum Longest Path</p>
-      <button onClick={()=>{onClickSJ()}}>Send to Calc Service</button>
-      <p>Add a new Node</p>
-      <AddUserTreeForm handleValues={handleValues} />
-      <p>Remove a Node</p>
-      <button onClick={()=>{onClickDN()}}>Delete Node {idCounter}</button>
+  const [dataState, setDataState] = useState(demo_data);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentSum, setCurrentSum] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const get_tree_url = window.calc_assets_url +"/" + window.calc_service_uid
+      const res = await fetch(get_tree_url);
+      const parsed = await res.json();
       
-      </header>
+      if (parsed.data){
+        setDataState(parsed.data);
+      }
+      setIsLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const handleValues = (values) => {
+    addChildToId(dataState, values.parent_node_id, values.node_value_display,  values.left_or_right, values.number_children);
+  };
+  
+  const onClickDN = () => {
+    removeNodeById(dataState, idCounter)
+  }
+
+  const onClickSJ = () => {
+    console.log("sending data")
+    fetch(window.calc_assets_url + "/" +  window.calc_service_uid, {
+        method: 'POST',
+        mode: 'cors',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Credentials': 'true'
+        },
+        body: JSON.stringify(dataState)
+      }).then(response => response.json())
+        .then(data => {
+          console.log(data.data.sum_lp);
+          setCurrentSum(data.data.sum_lp)
+        })
+        .catch(function(err) {
+        // Called if the server returns any errors
+          console.log("Error:"+err);
+        });
+  }
+
+  
+
+  return (
+   
+
+   
+    <div className="App">
+      <div className="App-header"> 
+      {isLoading ? (
+        <div>Loading ...</div>
+      ) : (
+         <Fragment>
+                <JsonTreeView data={dataState} shouldExpandNode={raw => true} />
+                <p>Calc Sum Longest Path</p>
+                <button onClick={()=>{onClickSJ()}}>Send to Calc Service</button>
+                <p>Current Sum: {currentSum}</p>
+                <p>Add a new Node</p>
+                <AddUserTreeForm handleValues={handleValues} />
+                {/* <p>Remove a Node</p>
+                <button onClick={()=>{onClickDN()}}>Delete Node {idCounter}</button> */}
+          </Fragment>
+
+
+      )}
+
+      </div>
     </div>
+   
   );
 }
 

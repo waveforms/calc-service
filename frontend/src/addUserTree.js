@@ -7,13 +7,11 @@ import * as yup from "yup";
 const initialState = {
   parent_node_id: "",
   node_value_display: "",
-  node_value: "",
   left_or_right: "",
   number_children: ""
 };
 const userSchema = yup.object().shape({
   parent_node_id:yup.string().required(),
-  node_value: yup.string().required(),
   node_value_display: yup.string().required(),
   left_or_right: yup.string().required(),
   number_children: yup.string(), 
@@ -71,20 +69,7 @@ function AddUserTreeForm(props) {
                 ""
               )}
 
-              <Field
-                type="node_value"
-                onChange={props.handleChange}
-                name="node_value"
-                value={props.values.node_value}
-                placeholder="node_value"
-                className={s.text_field}
-              />
-
-              {props.errors.node_value && props.touched.node_value ? (
-                <span className={s.field_text}>{props.errors.node_value}</span>
-              ) : (
-                ""
-              )}
+             
               <Field
                 name="left_or_right"
                 onChange={props.handleChange}
